@@ -14,12 +14,33 @@ namespace MathGame
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+
+    using System.Windows.Threading;
+
     public partial class MainWindow : Window
     {
+        DispatcherTimer timer = new DispatcherTimer();
+        int tenthOfSecondsElapsed;
+        int matchesFound;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            timer.Interval = TimeSpan.FromSeconds(.1);
+            timer.Tick += TimerTick;
             SetUpGame();
+        }
+
+        private void TimerTick(object? sender, EventArgs e)
+        {
+            tenthOfSecondsElapsed++;
+            timeTextBlock.Text = (tenthOfSecondsElapsed / 10F).ToString("0.0s");
+            if (matchesFound == 8)
+            {
+                timer.Stop();
+                timeTextBlock.Text = timeTextBlock.Text + " - Play again?";
+            }
         }
 
         private void SetUpGame()
@@ -40,12 +61,19 @@ namespace MathGame
 
             foreach (TextBlock textBlock in MainGrid.Children.OfType<TextBlock>())
             {
-                int index = random.Next(pairsOfEmoji.Count);
-                string nextEmoji = pairsOfEmoji[index];
+                if (textBlock.Name != "timeTextBlock")
+                {
+                    int index = random.Next(pairsOfEmoji.Count);
+                    string nextEmoji = pairsOfEmoji[index];
 
-                textBlock.Text = nextEmoji;
-                pairsOfEmoji.RemoveAt(index);
+                    textBlock.Text = nextEmoji;
+                    pairsOfEmoji.RemoveAt(index);
+                }
             }
+
+            timer.Start();
+            tenthOfSecondsElapsed = 0;
+            matchesFound = 0;
         }
 
         TextBlock lastClickedTextBlock;
@@ -63,6 +91,7 @@ namespace MathGame
             }
             else if (currentTextBlock.Text == lastClickedTextBlock.Text)
             {
+                matchesFound++;
                 currentTextBlock.Visibility = Visibility.Hidden;
                 findingMatch = false;
             }
@@ -70,6 +99,14 @@ namespace MathGame
             {
                 lastClickedTextBlock.Visibility = Visibility.Visible;
                 findingMatch = false;
+            }
+        }
+
+        private void timeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (matchesFound == 8)
+            {
+                SetUpGame();
             }
         }
     }
